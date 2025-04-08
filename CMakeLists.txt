@@ -1,16 +1,15 @@
 cmake_minimum_required(VERSION 3.2)
-project(TankOnline)
+project(super-duper-fiesta)
 
 set(CMAKE_CXX_STANDARD 20)
 
 add_subdirectory(externals/SFML)
-
+add_subdirectory(game)
 set(IMGUI_SFML_FIND_SFML OFF)
 set(IMGUI_DIR "${CMAKE_SOURCE_DIR}/externals/imgui/" CACHE STRING "")
 add_subdirectory(externals/imgui-sfml)
 add_subdirectory(externals/Physics_923)
 
-add_subdirectory(game)
 
 
 #serv

@@ -1,6 +1,3 @@
-//
-// Created by unite on 24.02.2025.
-//
 
 #ifndef _CONST_H_
 #define _CONST_H_
@@ -10,5 +7,7 @@ static constexpr short PORT_NUMBER = 4533;
 
 unsigned int kWindowWidth = 1024;
 unsigned int kWindowLength = 1024;
+float kWindowWidthF = static_cast<float>(kWindowWidth);
+float kWindowLengthF = static_cast<float>(kWindowLength);
 
 #endif //_CONST_H_

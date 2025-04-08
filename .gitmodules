@@ -7,9 +7,6 @@
 [submodule "externals/imgui"]
 	path = externals/imgui
 	url = https://github.com/ocornut/imgui.git
-[submodule "Physics_923"]
-	path = Physics_923
-	url = https://github.com/SAE-Geneve/Physics_923
 [submodule "externals/Physics_923"]
 	path = externals/Physics_923
 	url = https://github.com/SAE-Geneve/Physics_923

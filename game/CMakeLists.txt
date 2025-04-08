@@ -2,17 +2,15 @@
 file(GLOB_RECURSE HEADER_FILES ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h)
 
 
-add_library(api STATIC ${SRC_FILES} ${HEADER_FILES})
+add_library(api STATIC ${SRC_FILES} ${HEADER_FILES}
+        src/Rendering.cc
+        include/Rendering.h)
 target_include_directories(api PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include/)
 
 
 target_link_libraries(api PRIVATE sfml-graphics sfml-window sfml-system)  # Link SFML to `api`
 target_include_directories(api PUBLIC externals/SFML/include)  # Include SFML headers
 
-
-target_include_directories(api PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/../crackitos_physics/physics/include
-)
 
 file(GLOB_RECURSE DATA_FILES
         "data/*.json"
