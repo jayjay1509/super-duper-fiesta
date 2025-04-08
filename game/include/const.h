@@ -8,4 +8,7 @@
 static constexpr auto MAX_MESSAGE_LENGTH = 150;
 static constexpr short PORT_NUMBER = 4533;
 
+unsigned int kWindowWidth = 1024;
+unsigned int kWindowLength = 1024;
+
 #endif //_CONST_H_
