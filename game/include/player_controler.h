@@ -19,9 +19,9 @@ class PlayerController {
     // Vous pouvez également ajouter un collider si nécessaire
 
     crackitos_physics::physics::Collider playerCollider(
-        crackitos_core::math::AABB( crackitos_core::math::Vec2f(0.0f, 0.0f), crackitos_core::math::Vec2f(10.0f, 10.0f)),
+        crackitos_core::math::AABB( crackitos_core::math::Vec2f(0.0f, 0.0f), crackitos_core::math::Vec2f(50.0f, 50.0f)),
         0.5f,  // Bounciness (restitution)
-        0.3f,  // Friction
+        0.5f,  // Friction
         false, // Pas un trigger
         body_handle_ // Handle du corps
     );
