@@ -4,7 +4,10 @@ file(GLOB_RECURSE HEADER_FILES ${CMAKE_CURRENT_SOURCE_DIR}/include/*.h)
 
 add_library(api STATIC ${SRC_FILES} ${HEADER_FILES}
         src/Rendering.cc
-        include/Rendering.h)
+        include/Rendering.h
+        src/bullet.cc
+        include/bullet.h
+        include/WallFactory.h)
 target_include_directories(api PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include/)
 
 

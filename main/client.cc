@@ -8,6 +8,7 @@
 #include "const.h"
 #include "player_controler.h"
 #include "physics_world.h"
+#include "WallFactory.h"
 
 enum class Status {
   NOT_CONNECTED,
@@ -15,61 +16,54 @@ enum class Status {
 };
 
 int main() {
-  sf::RenderWindow window(sf::VideoMode({kWindowWidth, kWindowLength}), "hockey");
+  sf::RenderWindow window(sf::VideoMode({kWindowWidth, kWindowLength}), "super-duper-fiesta");
   window.setFramerateLimit(60);
   crackitos_physics::physics::PhysicsWorld physics_world_;
+  std::vector<Bullet> bullets;
 
   // Initialisation du monde physique
   crackitos_core::math::AABB worldBounds(
       crackitos_core::math::Vec2f(0, 0),
       crackitos_core::math::Vec2f(kWindowWidthF, kWindowLengthF)
   );
-  physics_world_.Initialize(worldBounds, true, crackitos_core::math::Vec2f(0, 0));
+  physics_world_.Initialize(worldBounds, false, crackitos_core::math::Vec2f(0, 0));
 
-  // Création des murs avec leur collider
-  // Mur supérieur
-  crackitos_physics::physics::Body topWallBody;
-  topWallBody.set_position(crackitos_core::math::Vec2f(kWindowWidthF / 2.0f, 5.f)); // Position Y à 5.f (moitié de l'épaisseur)
-  topWallBody.set_mass(0.0f);
-  auto topWallHandle = physics_world_.CreateBody(topWallBody);
-  crackitos_physics::physics::Collider topWallCollider(
-      crackitos_core::math::AABB(crackitos_core::math::Vec2f(-kWindowWidthF/2, -5.f), crackitos_core::math::Vec2f(kWindowWidthF/2, 5.f)),
-      0.0f, 1.0f, false, topWallHandle
-  );
-  physics_world_.CreateCollider(topWallHandle, topWallCollider);
+  WallFactory wallFactory(physics_world_);
 
-  // Mur inférieur
-  crackitos_physics::physics::Body bottomWallBody;
-  bottomWallBody.set_position(crackitos_core::math::Vec2f(kWindowWidthF / 2.0f, kWindowLengthF - 5.f));
-  bottomWallBody.set_mass(0.0f);
-  auto bottomWallHandle = physics_world_.CreateBody(bottomWallBody);
-  crackitos_physics::physics::Collider bottomWallCollider(
-      crackitos_core::math::AABB(crackitos_core::math::Vec2f(-kWindowWidthF/2, -5.f), crackitos_core::math::Vec2f(kWindowWidthF/2, 5.f)),
-      0.0f, 1.0f, false, bottomWallHandle
+// Mur supérieur
+  auto topWallHandle = wallFactory.CreateWall(
+      crackitos_core::math::Vec2f(kWindowWidthF / 2.0f, 0.f),
+      crackitos_core::math::Vec2f(kWindowWidthF, 50.f)
   );
-  physics_world_.CreateCollider(bottomWallHandle, bottomWallCollider);
 
-  // Mur gauche
-  crackitos_physics::physics::Body leftWallBody;
-  leftWallBody.set_position(crackitos_core::math::Vec2f(5.f, kWindowLengthF / 2.0f));
-  leftWallBody.set_mass(0.0f);
-  auto leftWallHandle = physics_world_.CreateBody(leftWallBody);
-  crackitos_physics::physics::Collider leftWallCollider(
-      crackitos_core::math::AABB(crackitos_core::math::Vec2f(-5.f, -kWindowLengthF/2), crackitos_core::math::Vec2f(5.f, kWindowLengthF/2)),
-      0.0f, 1.0f, false, leftWallHandle
+// Mur inférieur
+  auto bottomWallHandle = wallFactory.CreateWall(
+      crackitos_core::math::Vec2f(kWindowWidthF / 2.0f, kWindowLengthF),
+      crackitos_core::math::Vec2f(kWindowWidthF, 50.f)
   );
-  physics_world_.CreateCollider(leftWallHandle, leftWallCollider);
 
-  // Mur droit
-  crackitos_physics::physics::Body rightWallBody;
-  rightWallBody.set_position(crackitos_core::math::Vec2f(kWindowWidthF - 5.f, kWindowLengthF / 2.0f));
-  rightWallBody.set_mass(0.0f);
-  auto rightWallHandle = physics_world_.CreateBody(rightWallBody);
-  crackitos_physics::physics::Collider rightWallCollider(
-      crackitos_core::math::AABB(crackitos_core::math::Vec2f(-5.f, -kWindowLengthF/2), crackitos_core::math::Vec2f(5.f, kWindowLengthF/2)),
-      0.0f, 1.0f, false, rightWallHandle
+
+  auto leftWallHandle = wallFactory.CreateWall(
+      crackitos_core::math::Vec2f(0.f, kWindowLengthF / 2.0f),
+      crackitos_core::math::Vec2f(50.f, kWindowLengthF)
   );
-  physics_world_.CreateCollider(rightWallHandle, rightWallCollider);
+
+
+  auto rightWallHandle = wallFactory.CreateWall(
+      crackitos_core::math::Vec2f(kWindowWidthF, kWindowLengthF / 2.0f),
+      crackitos_core::math::Vec2f(50.f, kWindowLengthF)
+  );
+
+  auto centerHorizontalWallHandle = wallFactory.CreateWall(
+      crackitos_core::math::Vec2f(kWindowWidthF / 2.0f, kWindowLengthF / 2.0f),
+      crackitos_core::math::Vec2f(400.f, 50.f)  // Longueur du mur horizontal
+  );
+
+// Mur central vertical
+  auto centerVerticalWallHandle = wallFactory.CreateWall(
+      crackitos_core::math::Vec2f(kWindowWidthF / 2.0f, kWindowLengthF / 2.0f),
+      crackitos_core::math::Vec2f(50.f, 400.f)  // Longueur du mur vertical
+  );
 
   // Chargement de la texture
   sf::Texture texture;
@@ -92,22 +86,51 @@ int main() {
   ImGui::SetNextWindowSize({300, 100}, ImGuiCond_Always);
   ImGui::SetNextWindowPos({20.0f, 20.0f}, ImGuiCond_Always);
 
-  // Préparation des formes des murs pour le rendu
-  sf::RectangleShape topWallShape(sf::Vector2f(kWindowWidthF, 10.f));
-  topWallShape.setFillColor(sf::Color::Red);
-  topWallShape.setPosition(sf::Vector2f(0.f, 0.f));
+  std::vector<sf::RectangleShape> wallShapes;
 
-  sf::RectangleShape bottomWallShape(sf::Vector2f(kWindowWidthF, 10.f));
-  bottomWallShape.setFillColor(sf::Color::Red);
-  bottomWallShape.setPosition(sf::Vector2f(0.f, kWindowLengthF - 10.f));
+  // Mur supérieur
+  sf::RectangleShape topWall(sf::Vector2f(kWindowWidthF, 50.f));
+  topWall.setFillColor(sf::Color::Red);
+  topWall.setOrigin(sf::Vector2f(kWindowWidthF / 2.0f, 25.f)); // Centre de la forme
+  topWall.setPosition(sf::Vector2f(kWindowWidthF / 2.0f, 0.f)); // Position physique (centre du mur)
+  wallShapes.push_back(topWall);
 
-  sf::RectangleShape leftWallShape(sf::Vector2f(10.f, kWindowLengthF));
-  leftWallShape.setFillColor(sf::Color::Red);
-  leftWallShape.setPosition(sf::Vector2f(0.f, 0.f));
+// Mur inférieur
+  sf::RectangleShape bottomWall(sf::Vector2f(kWindowWidthF, 50.f));
+  bottomWall.setFillColor(sf::Color::Red);
+  bottomWall.setOrigin(sf::Vector2f(kWindowWidthF / 2.0f, 25.f)); // Centre de la forme
+  bottomWall.setPosition(sf::Vector2f(kWindowWidthF / 2.0f, kWindowLengthF)); // Position physique (centre du mur)
+  wallShapes.push_back(bottomWall);
 
-  sf::RectangleShape rightWallShape(sf::Vector2f(10.f, kWindowLengthF));
-  rightWallShape.setFillColor(sf::Color::Red);
-  rightWallShape.setPosition(sf::Vector2f(kWindowWidthF - 10.f, 0.f));
+// Mur gauche
+  sf::RectangleShape leftWall(sf::Vector2f(50.f, kWindowLengthF));
+  leftWall.setFillColor(sf::Color::Red);
+  leftWall.setOrigin(sf::Vector2f(25.f, kWindowLengthF / 2.0f)); // Centre de la forme
+  leftWall.setPosition(sf::Vector2f(0.f, kWindowLengthF / 2.0f)); // Position physique (centre du mur)
+  wallShapes.push_back(leftWall);
+
+// Mur droit
+  sf::RectangleShape rightWall(sf::Vector2f(50.f, kWindowLengthF));
+  rightWall.setFillColor(sf::Color::Red);
+  rightWall.setOrigin(sf::Vector2f(25.f, kWindowLengthF / 2.0f)); // Centre de la forme
+  rightWall.setPosition(sf::Vector2f(kWindowWidthF, kWindowLengthF / 2.0f)); // Position physique (centre du mur)
+  wallShapes.push_back(rightWall);
+
+// Mur central horizontal
+  sf::RectangleShape horizontalWall(sf::Vector2f(400.f, 50.f));  // Taille : 400 x 50
+  horizontalWall.setFillColor(sf::Color::Red);
+  horizontalWall.setOrigin(sf::Vector2f(400.f / 2.0f, 50.f / 2.0f)); // Centre de la forme
+  horizontalWall.setPosition(sf::Vector2f(kWindowWidthF / 2.0f, kWindowLengthF / 2.0f)); // Position physique (centre du mur)
+  wallShapes.push_back(horizontalWall);
+
+// Mur central vertical
+  sf::RectangleShape verticalWall(sf::Vector2f(50.f, 400.f));  // Taille : 50 x 400
+  verticalWall.setFillColor(sf::Color::Red);
+  verticalWall.setOrigin(sf::Vector2f(50.f / 2.0f, 400.f / 2.0f)); // Centre de la forme
+  verticalWall.setPosition(sf::Vector2f(kWindowWidthF / 2.0f, kWindowLengthF / 2.0f)); // Position physique (centre du mur)
+  wallShapes.push_back(verticalWall);
+
+
 
   while (isOpen) {
     physics_world_.Update(deltaClock.getElapsedTime().asSeconds());
@@ -126,6 +149,27 @@ int main() {
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S)) direction.y = 1.f;
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A)) direction.x = -1.f;
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D)) direction.x = 1.f;
+
+    if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
+      sf::Vector2i mousePixelPos = sf::Mouse::getPosition(window);
+      sf::Vector2f mouseWorldPos = window.mapPixelToCoords(mousePixelPos); // prend en compte la caméra
+
+      // Position du joueur dans SFML
+      sf::Vector2f playerPos(player.GetPosition().x, player.GetPosition().y);
+
+      // Vecteur directionnel
+
+      sf::Vector2f dir = mouseWorldPos - playerPos;
+      crackitos_core::math::Vec2f vecDir(dir.x, dir.y);
+
+      // Normaliser
+      float len = std::sqrt(dir.x * dir.x + dir.y * dir.y);
+      if (len != 0)
+        dir /= len;
+
+      player.Shoot(vecDir);
+      //std::cout << "pan\n" << vecDir.x << ":" << vecDir.y << "pan\n";
+    }
     player.Move(direction);
     player.Update(deltaClock.getElapsedTime().asSeconds());
 
@@ -153,6 +197,17 @@ int main() {
     aimMarker.setOrigin(sf::Vector2f (3.f, 3.f)); // Centrer le marqueur
     aimMarker.setPosition(mousePos);
 
+
+    for (auto& bullet : bullets) {
+      bullet.Update(deltaClock.getElapsedTime().asSeconds());
+      std::cout << "Updated Bullet Position: " << bullet.GetPosition().x << ", " << bullet.GetPosition().y << std::endl;
+    }
+
+
+    // Dessiner les balles actives
+
+
+
     // Mise à jour de l'UI
     ImGui::SFML::Update(window, deltaClock.restart());
     ImGui::Begin("Simple Chat", nullptr, ImGuiWindowFlags_NoTitleBar);
@@ -160,12 +215,30 @@ int main() {
 
     // Rendu
     window.clear();
-    window.draw(sprite);
-    window.draw(topWallShape);
-    window.draw(bottomWallShape);
-    window.draw(leftWallShape);
-    window.draw(rightWallShape);
+
+
+
+    //window.draw(sprite);
+    for (auto& wallShape : wallShapes) {
+      window.draw(wallShape);
+    }
+
     window.draw(playerShape);
+
+    for (auto& bullet : bullets) {
+      if (bullet.IsActive()) {
+        std::cout << "Bullet Position: " << bullet.GetPosition().x << ", " << bullet.GetPosition().y << std::endl;
+
+        // Dessinez la balle avec SFML
+        sf::CircleShape shape(10.f);  // Rayon de la balle
+        shape.setPosition(sf::Vector2f( bullet.GetPosition().x, bullet.GetPosition().y));  // Position de la balle
+        shape.setFillColor(sf::Color::Red);
+        window.draw(shape);
+      }
+    }
+    player.Draw(window);
+
+
     window.draw(line,2, sf::PrimitiveType::Lines);
     window.draw(aimMarker);
     ImGui::SFML::Render(window);

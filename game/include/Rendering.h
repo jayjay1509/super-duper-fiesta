@@ -22,7 +22,7 @@ class Renderer {
 
   void Draw(const sf::Drawable& drawable){window_.draw(drawable);}
 
-  void Render(const std::vector<sf::Sprite>& sprites)
+  void Render(const std::vector<sf::Sprite>& sprites) //todo std:span ou SPAM
   {
     for (auto& sprite:sprites) {
       Draw(sprite);
