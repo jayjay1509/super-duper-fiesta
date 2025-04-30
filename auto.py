@@ -21,10 +21,10 @@ def auto_push(project_path, branch="dev"):
         if stash_needed:
             subprocess.run(['git', 'stash'], cwd=project_path, check=True)
 
-        # Vérifie si la branche dev existe
+        # Vï¿½rifie si la branche dev existe
         branches = subprocess.check_output(['git', 'branch'], cwd=project_path, text=True)
         if f' {branch}' not in branches and f'* {branch}' not in branches:
-            print(f"Branche '{branch}' introuvable, creation à partir de '{current_branch}'...")
+            print(f"Branche '{branch}' introuvable, creation ï¿½ partir de '{current_branch}'...")
             subprocess.run(['git', 'checkout', '-b', branch], cwd=project_path, check=True)
             subprocess.run(['git', 'push', '-u', 'origin', branch], cwd=project_path, check=True)
         else:
@@ -39,12 +39,12 @@ def auto_push(project_path, branch="dev"):
             subprocess.run(['git', 'push', 'origin', branch], cwd=project_path, check=True)
             print(f"Push termine pour {project_path}")
         else:
-            print(f"Aucune modification à pusher pour {project_path}.")
+            print(f"Aucune modification pusher pour {project_path}.")
 
-        # Retour à la branche d'origine
+        # Retour ï¿½ la branche d'origine
         subprocess.run(['git', 'checkout', current_branch], cwd=project_path, check=True)
 
-        # Si on était revenu avec un stash, remettre les fichiers
+        # Si on ï¿½tait revenu avec un stash, remettre les fichiers
         if stash_needed and current_branch != branch:
             subprocess.run(['git', 'stash', 'pop'], cwd=project_path, check=True)
 
