@@ -20,7 +20,14 @@ target_link_libraries(server PRIVATE api)
 
 #client
 add_executable(client main/client.cc)
-target_include_directories(client PRIVATE externals/SFML/include externals/imgui-sfml externals/imgui externals/Physics_923)
+target_include_directories(client PRIVATE
+        externals/SFML/include
+        externals/imgui-sfml
+        externals/imgui
+        externals/Physics_923
+        externals/LoadBalancing-cpp
+        externals/Photon-cpp
+)
 target_link_libraries(client PRIVATE sfml-network sfml-graphics ImGui-SFML api crackitos_physics)
 
 if(MSVC)

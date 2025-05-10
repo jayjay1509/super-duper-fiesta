@@ -9,7 +9,6 @@
 #include "player_controler.h"
 #include "physics_world.h"
 #include "WallFactory.h"
-
 enum class Status {
   NOT_CONNECTED,
   CONNECTED
