@@ -144,9 +144,11 @@ int main() {
 
   while (isOpen) {
 
+    SDF::NetworkManager::Tick();
+
     int remoteNr = client.getRemotePlayerNr();
     int LocalNr = client.getLocalPlayerNr();
-    std::cout << LocalNr << ";" << remoteNr <<"\n";
+    //std::cout << LocalNr << ";" << remoteNr <<"\n";
 
 
     physics_world_.Update(deltaClock.getElapsedTime().asSeconds());
@@ -163,51 +165,69 @@ int main() {
     float directionY = 0;
 
     sf::Vector2f direction2(0, 0);
+    if (window.hasFocus()) {
+      if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W)) directionY = -1.f;
+      if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S)) directionY = 1.f;
+      if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A)) directionX = -1.f;
+      if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D)) directionX = 1.f;
+    }
+    if(LocalNr == 1) {
+      if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)
+          && shootClock.getElapsedTime().asSeconds() >= shootCooldown) {
+        shootClock.restart();
+        sf::Vector2i mousePixelPos = sf::Mouse::getPosition(window);
+        sf::Vector2f mouseWorldPos = window.mapPixelToCoords(mousePixelPos);
 
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W)) directionY = -1.f;
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S)) directionY = 1.f;
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A)) directionX = -1.f;
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D)) directionX = 1.f;
+        sf::Vector2f playerPos(player.GetPosition().x, player.GetPosition().y);
+        sf::Vector2f dir = mouseWorldPos - playerPos;
+        float len = std::sqrt(dir.x * dir.x + dir.y * dir.y);
+        if (len != 0)
+          dir /= len;
 
-    if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)
-        && shootClock.getElapsedTime().asSeconds() >= shootCooldown)
-    {
-      shootClock.restart();
-      sf::Vector2i mousePixelPos = sf::Mouse::getPosition(window);
-      sf::Vector2f mouseWorldPos = window.mapPixelToCoords(mousePixelPos);
+        crackitos_core::math::Vec2f vecDir{dir.x, dir.y};
+        player.Shoot(vecDir);
+      }
+    }
 
-      sf::Vector2f playerPos(player.GetPosition().x, player.GetPosition().y);
-      sf::Vector2f dir = mouseWorldPos - playerPos;
-      float len = std::sqrt(dir.x*dir.x + dir.y*dir.y);
-      if (len != 0)
-        dir /= len;
+    if(LocalNr == 2) {
+      if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)
+          && shootClock.getElapsedTime().asSeconds() >= shootCooldown) {
+        shootClock.restart();
+        sf::Vector2i mousePixelPos = sf::Mouse::getPosition(window);
+        sf::Vector2f mouseWorldPos = window.mapPixelToCoords(mousePixelPos);
 
-      crackitos_core::math::Vec2f vecDir{ dir.x, dir.y };
-      player.Shoot(vecDir);
+        sf::Vector2f playerPos(player2.GetPosition().x, player2.GetPosition().y);
+        sf::Vector2f dir = mouseWorldPos - playerPos;
+        float len = std::sqrt(dir.x * dir.x + dir.y * dir.y);
+        if (len != 0)
+          dir /= len;
+
+        crackitos_core::math::Vec2f vecDir{dir.x, dir.y};
+        player2.Shoot(vecDir);
+      }
     }
 
 
     sf::Vector2f otherDir = client.getDirection(remoteNr);
 
-
-    if(client.getLocalPlayerNr() == 1)
+    if(LocalNr == 1)
     {
-      player.Move({directionX,directionY});
-      player2.pos(otherDir);
+    player.Move({directionX,directionY});
+    player2.pos(sf::Vector2f (otherDir.x,otherDir.y));
     }
 
-    if(client.getLocalPlayerNr() == 2)
+
+    if(LocalNr == 2)
     {
       player2.Move({directionX,directionY});
-      player.pos(otherDir);
+      player.pos(sf::Vector2f (otherDir.x,otherDir.y));
     }
 
 
-    if (client.getRemotePlayerNr() != 0)
-    {
+
     player.Update(deltaClock.getElapsedTime().asSeconds());
     player2.Update(deltaClock.getElapsedTime().asSeconds());
-    }
+
 
     // Rendu du joueur
     sf::RectangleShape playerShape(sf::Vector2f(50.f, 50.f));
@@ -224,21 +244,19 @@ int main() {
     playerShape2.setPosition(visualPos2);
 
 
-
     sf::Vector2f mousePos = sf::Vector2f(sf::Mouse::getPosition(window));
     sf::Vector2f tankCenter(playerPos.x, playerPos.y);
-
-
     sf::Vertex line[] = {
-        sf::Vertex(tankCenter, sf::Color::Red),
-        sf::Vertex(mousePos, sf::Color::Red)
+          sf::Vertex(tankCenter, sf::Color::Red),
+          sf::Vertex(mousePos, sf::Color::Red)
     };
-
-
     sf::CircleShape aimMarker(3.f);
     aimMarker.setFillColor(sf::Color::Red);
     aimMarker.setOrigin(sf::Vector2f (3.f, 3.f));
     aimMarker.setPosition(mousePos);
+
+
+
 
 
     for (auto& bullet : bullets) {
@@ -246,12 +264,21 @@ int main() {
       std::cout << "Updated Bullet Position: " << bullet.GetPosition().x << ", " << bullet.GetPosition().y << std::endl;
     }
 
+    if(LocalNr == 1) {
+      char buf[64];
+      std::snprintf(buf, sizeof(buf), "%f,%f", player.GetPosition().x, player.GetPosition().y);
+      ExitGames::Common::JString jsDir(buf);
+      SDF::NetworkManager::GetLoadBalancingClient()
+          .opRaiseEvent(false, jsDir, 2);
+    }
 
-    char buf[64];
-    std::snprintf(buf, sizeof(buf), "%f,%f", player.GetPosition().x, player.GetPosition().x);
-    ExitGames::Common::JString jsDir(buf);
-    SDF::NetworkManager::GetLoadBalancingClient()
-        .opRaiseEvent(false, jsDir, 2);
+    if(LocalNr == 2) {
+      char buf[64];
+      std::snprintf(buf, sizeof(buf), "%f,%f", player2.GetPosition().x, player2.GetPosition().y);
+      ExitGames::Common::JString jsDir(buf);
+      SDF::NetworkManager::GetLoadBalancingClient()
+          .opRaiseEvent(false, jsDir, 2);
+    }
 
 
 
@@ -285,11 +312,12 @@ int main() {
     player2.Draw(window);
 
 
-    window.draw(line,2, sf::PrimitiveType::Lines);
+    //window.draw(line,2, sf::PrimitiveType::Lines);
     window.draw(aimMarker);
     ImGui::SFML::Render(window);
     window.display();
   }
+  SDF::NetworkManager::End();
   ImGui::SFML::Shutdown();
   return 0;
 }

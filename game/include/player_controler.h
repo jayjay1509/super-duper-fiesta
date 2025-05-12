@@ -86,7 +86,7 @@ class PlayerController {
   }
 
 
-  crackitos_core::math::Vec2<float> GetPosition() {
+  crackitos_core::math::Vec2<crackitos_core::commons::fp> GetPosition() {
     crackitos_physics::physics::Body& body = world_.GetMutableBody(body_handle_);
     return body.position();
   }

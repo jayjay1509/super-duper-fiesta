@@ -16,35 +16,39 @@ class MyClient : public SDF::ClientInterface {
   std::unordered_map<int, sf::Vector2f> directions_;
 
  public:
-  void debugReturn(int /*debugLevel*/, const ExitGames::Common::JString& /*string*/) override {}
+  // ✅ Méthodes obligatoires de Listener
+  void debugReturn(int /*debugLevel*/, const ExitGames::Common::JString & /*string*/) override {}
+
   void connectionErrorReturn(int /*errorCode*/) override {}
+
   void clientErrorReturn(int /*errorCode*/) override {}
+
   void warningReturn(int /*warningCode*/) override {}
+
   void serverErrorReturn(int /*errorCode*/) override {}
+
   void joinRoomEventAction(int /*playerNr*/,
-                           const ExitGames::Common::JVector<int>& /*playernrs*/,
-                           const ExitGames::LoadBalancing::Player& /*player*/) override {}
+                           const ExitGames::Common::JVector<int> & /*playernrs*/,
+                           const ExitGames::LoadBalancing::Player & /*player*/) override {}
+
   void leaveRoomEventAction(int /*playerNr*/, bool /*isInactive*/) override {}
+
   void joinRoomReturn(int /*localPlayerNr*/,
-                      const ExitGames::Common::JVector<int>& /*playernrs*/,
-                      const ExitGames::LoadBalancing::Player& /*player*/) {}
-  void leaveRoomReturn(int /*errorCode*/, const ExitGames::Common::JString& /*errorString*/) override {}
+                      const ExitGames::Common::JVector<int> & /*playernrs*/,
+                      const ExitGames::LoadBalancing::Player & /*player*/) {}
+
+  void leaveRoomReturn(int /*errorCode*/, const ExitGames::Common::JString & /*errorString*/) override {}
 
   void connectReturn(int errorCode,
-                     const ExitGames::Common::JString& errorString,
-                     const ExitGames::Common::JString& cluster)
-  {
-    std::cout << "[Photon] connectReturn code: " << errorCode
-              << ", message: " << errorString.UTF8Representation().cstr() << "\n";
-    if (errorCode == 0) {
-      std::cout << "[Photon] Connected successfully! Joining room...\n";
-      ExitGames::LoadBalancing::RoomOptions roomOptions;
-      SDF::NetworkManager::GetLoadBalancingClient().opJoinOrCreateRoom(L"test-room", roomOptions);
-    }
+                     const ExitGames::Common::JString &errorString,
+                     const ExitGames::Common::JString &cluster) {
+    std::cout << "Connected to Photon Cloud!\n";
+    ExitGames::LoadBalancing::RoomOptions roomOptions;
+    SDF::NetworkManager::GetLoadBalancingClient().opJoinOrCreateRoom(L"test-room", roomOptions);
   }
 
   void disconnectReturn() override {
-    std::cout << "[Photon] Disconnected from Photon Cloud.\n";
+    std::cout << "Disconnected from Photon Cloud.\n";
   }
 
   // Réception d’événements custom
@@ -61,9 +65,25 @@ class MyClient : public SDF::ClientInterface {
     }
   }
 
-  void roomListUpdate(const ExitGames::Common::JVector<ExitGames::LoadBalancing::Room>& /*roomList*/)  {}
-  void roomPropertiesChange(const ExitGames::Common::Hashtable& /*properties*/)  {}
-  void playerPropertiesChange(int /*playerNr*/, const ExitGames::Common::Hashtable& /*properties*/)  {}
+  void roomListUpdate(const ExitGames::Common::JVector<ExitGames::LoadBalancing::Room> & /*roomList*/) {}
+
+  void roomPropertiesChange(const ExitGames::Common::Hashtable & /*properties*/) {}
+
+  void playerPropertiesChange(int /*playerNr*/, const ExitGames::Common::Hashtable & /*properties*/) {}
+
+  void connectReturn(int errorCode,
+                     const ExitGames::Common::JString &errorString,
+                     const ExitGames::Common::JString &region,
+                     const ExitGames::Common::JString &cluster) override {
+
+    std::cout << "[Photon] connectReturn code: " << errorCode << ", message: " << errorString.UTF8Representation().cstr() << "\n";
+    if(errorCode == 0)
+    {
+      std::cout << "[Photon] Connected successfully! Joining room...\n";
+      ExitGames::LoadBalancing::RoomOptions roomOptions;
+      SDF::NetworkManager::GetLoadBalancingClient().opJoinOrCreateRoom(L"test-room", roomOptions);
+    }
+  }
 
 
   void storeDirection(int playerNr, const ExitGames::Common::JString& message) {
@@ -85,12 +105,9 @@ class MyClient : public SDF::ClientInterface {
 
   std::vector<int> getAllPlayerNrs() const {
     std::vector<int> result;
-    // Accède à la room jointe
     const auto& room = SDF::NetworkManager::GetLoadBalancingClient()
         .getCurrentlyJoinedRoom();
-    // Photon renvoie un JVector de pointeurs Player*
     ExitGames::Common::JVector<ExitGames::LoadBalancing::Player*> players = room.getPlayers();
-    // Itère dessus
     for (unsigned int i = 0; i < players.getSize(); ++i) {
       result.push_back(players[i]->getNumber());
     }
