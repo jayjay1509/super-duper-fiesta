@@ -3,7 +3,7 @@ project(sdf)
 
 set(CMAKE_CXX_STANDARD 20)
 
-# Forcer le bon runtime (/MD en Release, /MDd en Debug)
+
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>DLL")
 
 # ─── Sous-dossiers externes ────────────────────────────────────────────────
@@ -23,7 +23,7 @@ add_library(photon ${PHOTON_SRC_FILES})
 set_target_properties(photon PROPERTIES LINKER_LANGUAGE CXX)
 target_include_directories(photon PUBLIC externals/)
 
-# Lien conditionnel Debug / Release
+
 target_link_libraries(photon PUBLIC
         debug ${CMAKE_CURRENT_SOURCE_DIR}/externals/Common-cpp/lib/Common-cpp_vc17_debug_windows_md_x64.lib
         debug ${CMAKE_CURRENT_SOURCE_DIR}/externals/Photon-cpp/lib/Photon-cpp_vc17_debug_windows_md_x64.lib
@@ -38,7 +38,6 @@ target_link_libraries(server PRIVATE sfml-network api)
 
 # ─── Client ────────────────────────────────────────────────────────────────
 set(NET_DIR externals)
-
 add_executable(client main/client.cc)
 target_include_directories(client PUBLIC ${NET_DIR}/include)
 link_directories(${NET_DIR}/lib/windows/)

@@ -62,6 +62,12 @@ class PlayerController {
     body.ApplyForce(crackitos_core::math::Vec2f((direction * move_speed).x, (direction * move_speed).y));
   }
 
+  void pos(sf::Vector2f pos) {
+    crackitos_physics::physics::Body& body = world_.GetMutableBody(body_handle_);
+    body.set_position(crackitos_core::math::Vec2f(pos.x, pos.y));
+  }
+
+
   void Shoot(const crackitos_core::math::Vec2f& direction) {
     crackitos_physics::physics::Body& body = world_.GetMutableBody(body_handle_);
 

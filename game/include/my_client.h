@@ -99,17 +99,19 @@ class MyClient : public SDF::ClientInterface {
 
 
   int getRemotePlayerNr() const {
-    auto all = getAllPlayerNrs();
-    int local = getLocalPlayerNr();
-    for(int n : all)
-      if(n != local) return n;
-    return -1;
+    auto all   = getAllPlayerNrs();
+    int  local = getLocalPlayerNr();
+    for (int n : all) {
+      if (n != local)
+        return n;
+    }
+    return 0;
   }
 
 
   sf::Vector2f getDirection(int actorNr) const {
     auto it = directions_.find(actorNr);
-    return it == directions_.end() ? sf::Vector2f{0,0} : it->second;
+    return it == directions_.end() ? sf::Vector2f{300,100} : it->second;
   }
 
 

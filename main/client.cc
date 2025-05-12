@@ -26,6 +26,7 @@ int main() {
   ExitGames::LoadBalancing::ClientConstructOptions options;
   SDF::NetworkManager::Begin(&client, options);
 
+
   sf::Clock shootClock;
   const float shootCooldown = 1.f;
 
@@ -141,15 +142,15 @@ int main() {
   wallShapes.push_back(verticalWall);
 
 
-
   while (isOpen) {
 
     int remoteNr = client.getRemotePlayerNr();
+    int LocalNr = client.getLocalPlayerNr();
+    std::cout << LocalNr << ";" << remoteNr <<"\n";
 
 
     physics_world_.Update(deltaClock.getElapsedTime().asSeconds());
 
-    // Gestion des événements
     while (const std::optional event = window.pollEvent()) {
       ImGui::SFML::ProcessEvent(window, *event);
       if (event->is<sf::Event::Closed>()) {
@@ -157,14 +158,11 @@ int main() {
       }
     }
 
-    // Gestion des inputs
     sf::Vector2f direction(0, 0);
     float directionX = 0;
     float directionY = 0;
 
     sf::Vector2f direction2(0, 0);
-
-
 
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W)) directionY = -1.f;
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S)) directionY = 1.f;
@@ -174,10 +172,7 @@ int main() {
     if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)
         && shootClock.getElapsedTime().asSeconds() >= shootCooldown)
     {
-
       shootClock.restart();
-
-
       sf::Vector2i mousePixelPos = sf::Mouse::getPosition(window);
       sf::Vector2f mouseWorldPos = window.mapPixelToCoords(mousePixelPos);
 
@@ -195,12 +190,24 @@ int main() {
     sf::Vector2f otherDir = client.getDirection(remoteNr);
 
 
-    player.Move({directionX,directionY});
-    player2.Move(otherDir);
+    if(client.getLocalPlayerNr() == 1)
+    {
+      player.Move({directionX,directionY});
+      player2.pos(otherDir);
+    }
 
+    if(client.getLocalPlayerNr() == 2)
+    {
+      player2.Move({directionX,directionY});
+      player.pos(otherDir);
+    }
+
+
+    if (client.getRemotePlayerNr() != 0)
+    {
     player.Update(deltaClock.getElapsedTime().asSeconds());
-
     player2.Update(deltaClock.getElapsedTime().asSeconds());
+    }
 
     // Rendu du joueur
     sf::RectangleShape playerShape(sf::Vector2f(50.f, 50.f));
@@ -241,7 +248,7 @@ int main() {
 
 
     char buf[64];
-    std::snprintf(buf, sizeof(buf), "%f,%f", directionX, directionY);
+    std::snprintf(buf, sizeof(buf), "%f,%f", player.GetPosition().x, player.GetPosition().x);
     ExitGames::Common::JString jsDir(buf);
     SDF::NetworkManager::GetLoadBalancingClient()
         .opRaiseEvent(false, jsDir, 2);
@@ -265,8 +272,8 @@ int main() {
         std::cout << "Bullet Position: " << bullet.GetPosition().x << ", " << bullet.GetPosition().y << std::endl;
 
 
-        sf::CircleShape shape(10.f);  // Rayon de la balle
-        shape.setPosition(sf::Vector2f( bullet.GetPosition().x, bullet.GetPosition().y));  // Position de la balle
+        sf::CircleShape shape(10.f);
+        shape.setPosition(sf::Vector2f( bullet.GetPosition().x, bullet.GetPosition().y));
         shape.setFillColor(sf::Color::Red);
         window.draw(shape);
       }
