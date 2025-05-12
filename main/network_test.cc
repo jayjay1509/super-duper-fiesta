@@ -10,7 +10,7 @@
 #include "client_interface.h"
 #include "LoadBalancing-cpp/inc/RoomOptions.h"
 
-class MyClient : public micromachine::ClientInterface {
+class MyClient : public SDF::ClientInterface {
  public:
   // ✅ Méthodes obligatoires de Listener
   void debugReturn(int /*debugLevel*/, const ExitGames::Common::JString & /*string*/) override {}
@@ -40,7 +40,7 @@ class MyClient : public micromachine::ClientInterface {
                      const ExitGames::Common::JString &cluster) {
     std::cout << "Connected to Photon Cloud!\n";
     ExitGames::LoadBalancing::RoomOptions roomOptions;
-    micromachine::NetworkManager::GetLoadBalancingClient().opJoinOrCreateRoom(L"test-room", roomOptions);
+    SDF::NetworkManager::GetLoadBalancingClient().opJoinOrCreateRoom(L"test-room", roomOptions);
   }
 
   void disconnectReturn() override {
@@ -72,7 +72,7 @@ class MyClient : public micromachine::ClientInterface {
     {
       std::cout << "[Photon] Connected successfully! Joining room...\n";
       ExitGames::LoadBalancing::RoomOptions roomOptions;
-      micromachine::NetworkManager::GetLoadBalancingClient().opJoinOrCreateRoom(L"test-room", roomOptions);
+      SDF::NetworkManager::GetLoadBalancingClient().opJoinOrCreateRoom(L"test-room", roomOptions);
     }
   }
 };
@@ -87,7 +87,7 @@ int main() {
 
   MyClient client;
   ExitGames::LoadBalancing::ClientConstructOptions options;
-  micromachine::NetworkManager::Begin(&client, options);
+  SDF::NetworkManager::Begin(&client, options);
 
   std::string inputBuffer;
 
@@ -115,13 +115,13 @@ int main() {
     {
       std::cout << "[Photon] Trying to send message: " << message << "\n";
       ExitGames::Common::Hashtable data;
-      bool success = micromachine::NetworkManager::GetLoadBalancingClient().opRaiseEvent(true, ExitGames::Common::JString(message), 1);
+      bool success = SDF::NetworkManager::GetLoadBalancingClient().opRaiseEvent(true, ExitGames::Common::JString(message), 1);
       std::cout << "[Photon] Message sent status: " << (success ? "Success" : "Failure") << "\n";
     }
 
 
     // Photon service tick
-    micromachine::NetworkManager::Tick();
+    SDF::NetworkManager::Tick();
 
     ImGui::End();
 
@@ -130,7 +130,7 @@ int main() {
     window.display();
   }
 
-  micromachine::NetworkManager::End();
+  SDF::NetworkManager::End();
   ImGui::SFML::Shutdown();
   return 0;
 }

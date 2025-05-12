@@ -6,7 +6,7 @@
 #include "network.h"
 #include "LoadBalancing-cpp/inc/ConnectOptions.h"
 
-namespace micromachine {
+namespace SDF {
 static const ExitGames::Common::JString appID = L"9166a2d7-b9a8-4ea2-986c-e20260742d80"; // set your app id here
 static const ExitGames::Common::JString appVersion = L"1.0";
 

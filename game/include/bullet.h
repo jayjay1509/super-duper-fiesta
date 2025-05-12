@@ -16,7 +16,7 @@ class Bullet {
 
     active = true;
     this->world = &world;
-    lifetime = 1.2f;
+    lifetime = 6.0f;
 
     // Créer le corps physique de la balle
     crackitos_physics::physics::Body projBody;
@@ -39,7 +39,7 @@ class Bullet {
   void Update(float dt) {
     if (!active) return;
 
-    lifetime -= dt; // 🕒 on décrémente
+    lifetime -= dt;
     if (lifetime <= 0.f) {
       active = false;
       return;

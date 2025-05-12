@@ -10,7 +10,7 @@
 #include <iostream>
 #include "LoadBalancing-cpp/inc/Listener.h"
 
-namespace micromachine
+namespace SDF
 {
 
 class ClientInterface : public ExitGames::LoadBalancing::Listener
@@ -32,7 +32,7 @@ class ClientInterface : public ExitGames::LoadBalancing::Listener
   void operationReturn(const ExitGames::Photon::OperationResponse& operationResponse);
 };
 
-} // namespace micromachine
+} // namespace SDF
 
 
 

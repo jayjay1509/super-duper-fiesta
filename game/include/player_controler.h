@@ -9,17 +9,15 @@
 class PlayerController {
  public:
   std::vector<Bullet> bullets;
-  PlayerController(float m, crackitos_physics::physics::PhysicsWorld& world)
+  PlayerController(float m,sf::Vector2f pos, crackitos_physics::physics::PhysicsWorld& world)
       : move_speed(m), world_(world) {
-//todo change m en speed_multiplaire
 
     crackitos_physics::physics::Body playerBody;
-    playerBody.set_position(crackitos_core::math::Vec2f(100.f, 200.f)) ;
+    playerBody.set_position(crackitos_core::math::Vec2f(pos.x, pos.y)) ;
     playerBody.set_mass(1.0f);
     body_handle_ = world_.CreateBody(playerBody);
 
 
-    // Vous pouvez également ajouter un collider si nécessaire
 
     crackitos_physics::physics::Collider playerCollider(
         crackitos_core::math::AABB( crackitos_core::math::Vec2f(0.0f, 0.0f), crackitos_core::math::Vec2f(50.0f, 50.0f)),

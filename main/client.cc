@@ -9,9 +9,7 @@
 #include "player_controler.h"
 #include "physics_world.h"
 #include "WallFactory.h"
-
-
-
+#include "my_client.h"
 
 enum class Status {
   NOT_CONNECTED,
@@ -23,6 +21,14 @@ int main() {
   window.setFramerateLimit(60);
   crackitos_physics::physics::PhysicsWorld physics_world_;
   std::vector<Bullet> bullets;
+
+  MyClient client;
+  ExitGames::LoadBalancing::ClientConstructOptions options;
+  SDF::NetworkManager::Begin(&client, options);
+
+  sf::Clock shootClock;
+  const float shootCooldown = 1.f;
+
 
   // Initialisation du monde physique
   crackitos_core::math::AABB worldBounds(
@@ -65,7 +71,7 @@ int main() {
 // Mur central vertical
   auto centerVerticalWallHandle = wallFactory.CreateWall(
       crackitos_core::math::Vec2f(kWindowWidthF / 2.0f, kWindowLengthF / 2.0f),
-      crackitos_core::math::Vec2f(50.f, 400.f)  // Longueur du mur vertical
+      crackitos_core::math::Vec2f(50.f, 400.f)
   );
 
   // Chargement de la texture
@@ -76,7 +82,8 @@ int main() {
   sf::Sprite sprite(texture);
   sprite.setPosition(sf::Vector2f(0, 0));
 
-  PlayerController player(100, physics_world_);
+  PlayerController player(100,sf::Vector2f(100, 100), physics_world_);
+  PlayerController player2(100,sf::Vector2f(300, 300), physics_world_);
 
   if (!ImGui::SFML::Init(window)) {
     std::cerr << "window creation error";
@@ -136,6 +143,10 @@ int main() {
 
 
   while (isOpen) {
+
+    int remoteNr = client.getRemotePlayerNr();
+
+
     physics_world_.Update(deltaClock.getElapsedTime().asSeconds());
 
     // Gestion des événements
@@ -148,33 +159,48 @@ int main() {
 
     // Gestion des inputs
     sf::Vector2f direction(0, 0);
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W)) direction.y = -1.f;
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S)) direction.y = 1.f;
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A)) direction.x = -1.f;
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D)) direction.x = 1.f;
+    float directionX = 0;
+    float directionY = 0;
 
-    if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)) {
+    sf::Vector2f direction2(0, 0);
+
+
+
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::W)) directionY = -1.f;
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::S)) directionY = 1.f;
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::A)) directionX = -1.f;
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::Key::D)) directionX = 1.f;
+
+    if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left)
+        && shootClock.getElapsedTime().asSeconds() >= shootCooldown)
+    {
+
+      shootClock.restart();
+
+
       sf::Vector2i mousePixelPos = sf::Mouse::getPosition(window);
-      sf::Vector2f mouseWorldPos = window.mapPixelToCoords(mousePixelPos); // prend en compte la caméra
+      sf::Vector2f mouseWorldPos = window.mapPixelToCoords(mousePixelPos);
 
-      // Position du joueur dans SFML
       sf::Vector2f playerPos(player.GetPosition().x, player.GetPosition().y);
-
-      // Vecteur directionnel
-
       sf::Vector2f dir = mouseWorldPos - playerPos;
-      crackitos_core::math::Vec2f vecDir(dir.x, dir.y);
-
-      // Normaliser
-      float len = std::sqrt(dir.x * dir.x + dir.y * dir.y);
+      float len = std::sqrt(dir.x*dir.x + dir.y*dir.y);
       if (len != 0)
         dir /= len;
 
+      crackitos_core::math::Vec2f vecDir{ dir.x, dir.y };
       player.Shoot(vecDir);
-      //std::cout << "pan\n" << vecDir.x << ":" << vecDir.y << "pan\n";
     }
-    player.Move(direction);
+
+
+    sf::Vector2f otherDir = client.getDirection(remoteNr);
+
+
+    player.Move({directionX,directionY});
+    player2.Move(otherDir);
+
     player.Update(deltaClock.getElapsedTime().asSeconds());
+
+    player2.Update(deltaClock.getElapsedTime().asSeconds());
 
     // Rendu du joueur
     sf::RectangleShape playerShape(sf::Vector2f(50.f, 50.f));
@@ -184,20 +210,27 @@ int main() {
     sf::Vector2f visualPos(playerPos.x - 25.f, playerPos.y - 25.f);
     playerShape.setPosition(visualPos);
 
-    // Indicateur de visée
+    sf::RectangleShape playerShape2(sf::Vector2f(50.f, 50.f));
+    playerShape2.setFillColor(sf::Color::Blue);
+    auto playerPos2 = player2.GetPosition();
+    sf::Vector2f visualPos2(playerPos2.x - 25.f, playerPos2.y - 25.f);
+    playerShape2.setPosition(visualPos2);
+
+
+
     sf::Vector2f mousePos = sf::Vector2f(sf::Mouse::getPosition(window));
     sf::Vector2f tankCenter(playerPos.x, playerPos.y);
 
-    // Ligne de visée
+
     sf::Vertex line[] = {
         sf::Vertex(tankCenter, sf::Color::Red),
         sf::Vertex(mousePos, sf::Color::Red)
     };
 
-    // Marqueur de visée
+
     sf::CircleShape aimMarker(3.f);
     aimMarker.setFillColor(sf::Color::Red);
-    aimMarker.setOrigin(sf::Vector2f (3.f, 3.f)); // Centrer le marqueur
+    aimMarker.setOrigin(sf::Vector2f (3.f, 3.f));
     aimMarker.setPosition(mousePos);
 
 
@@ -207,39 +240,42 @@ int main() {
     }
 
 
-    // Dessiner les balles actives
+    char buf[64];
+    std::snprintf(buf, sizeof(buf), "%f,%f", directionX, directionY);
+    ExitGames::Common::JString jsDir(buf);
+    SDF::NetworkManager::GetLoadBalancingClient()
+        .opRaiseEvent(false, jsDir, 2);
 
 
 
-    // Mise à jour de l'UI
     ImGui::SFML::Update(window, deltaClock.restart());
     ImGui::Begin("Simple Chat", nullptr, ImGuiWindowFlags_NoTitleBar);
     ImGui::End();
 
-    // Rendu
+
     window.clear();
 
 
-
-    //window.draw(sprite);
     for (auto& wallShape : wallShapes) {
       window.draw(wallShape);
     }
-
-    window.draw(playerShape);
 
     for (auto& bullet : bullets) {
       if (bullet.IsActive()) {
         std::cout << "Bullet Position: " << bullet.GetPosition().x << ", " << bullet.GetPosition().y << std::endl;
 
-        // Dessinez la balle avec SFML
+
         sf::CircleShape shape(10.f);  // Rayon de la balle
         shape.setPosition(sf::Vector2f( bullet.GetPosition().x, bullet.GetPosition().y));  // Position de la balle
         shape.setFillColor(sf::Color::Red);
         window.draw(shape);
       }
     }
+
+    window.draw(playerShape);
+    window.draw(playerShape2);
     player.Draw(window);
+    player2.Draw(window);
 
 
     window.draw(line,2, sf::PrimitiveType::Lines);

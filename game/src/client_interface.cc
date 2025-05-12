@@ -5,7 +5,7 @@
 #include "client_interface.h"
 #include "network.h"
 
-namespace micromachine
+namespace SDF
 {
 
 void ClientInterface::connectReturn(int errorCode, const ExitGames::Common::JString& errorString,
@@ -41,7 +41,7 @@ bool SendMessageToRoom(const ExitGames::Common::JString& msg)
   ExitGames::Common::Hashtable data;
   data.put((nByte)1, msg); // clé = 1, valeur = ton message
 
-  return micromachine::NetworkManager::GetLoadBalancingClient().opRaiseEvent(false, data, 1); // 1 = eventCode arbitraire
+  return NetworkManager::GetLoadBalancingClient().opRaiseEvent(false, data, 1); // 1 = eventCode arbitraire
 }
 
 
